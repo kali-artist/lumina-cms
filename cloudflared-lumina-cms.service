@@ -1,0 +1,13 @@
+[Unit]
+Description=Cloudflare Tunnel for LUMINA CMS
+After=network.target
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/cloudflared tunnel --config /home/ubuntu/.cloudflared/lumina-cms.yml run
+Restart=always
+RestartSec=5
+User=ubuntu
+
+[Install]
+WantedBy=multi-user.target
