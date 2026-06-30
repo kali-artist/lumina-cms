@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUMINA — 智能协作平台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --pink: #FF006E;
+      --orange: #FB5607;
+      --yellow: #FFBE0B;
+      --purple: #8338EC;
+      --blue: #3A86FF;
+      --cyan: #00F5D4;
+      --dark: #0A0A12;
+      --light: #F8F7F4;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--dark);
+      color: #fff;
+      overflow-x: hidden;
+    }
+    h1, h2, h3, h4, .font-display { font-family: 'Space Grotesk', sans-serif; }
+    .font-serif-display { font-family: 'DM Serif Display', serif; }
+
+    /* Video background overlay */
+    .video-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      opacity: 0.35;
+    }
+    #particle-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Gradient text */
+    .text-gradient {
+      background: linear-gradient(135deg, var(--pink), var(--orange), var(--yellow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .text-gradient-cool {
+      background: linear-gradient(135deg, var(--cyan), var(--blue), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Aurora background */
+    .aurora {
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(255,0,110,0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 30%, rgba(131,56,236,0.2) 0%, transparent 45%),
+        radial-gradient(ellipse at 40% 80%, rgba(0,245,212,0.15) 0%, transparent 40%),
+        radial-gradient(ellipse at 90% 90%, rgba(251,86,7,0.15) 0%, transparent 40%);
+    }
+
+    /* Marquee */
+    .marquee-track {
+      display: flex;
+      gap: 2rem;
+      animation: marquee 30s linear infinite;
+    }
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Card hover */
+    .hover-lift {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .hover-lift:hover {
+      transform: translateY(-8px) rotate(0.5deg);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--dark); }
+    ::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 4px; }
+
+    /* Blob shapes */
+    .blob {
+      border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+    }
+    .blob-2 {
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    }
+
+    /* Noise texture overlay */
+    .noise::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Glitch hover on links */
+    .glitch-link:hover {
+      animation: glitch 0.3s ease infinite;
+    }
+    @keyframes glitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(2px, -2px); }
+      60% { transform: translate(-2px, -2px); }
+      80% { transform: translate(2px, 2px); }
+      100% { transform: translate(0); }
+    }
+
+    /* Process line */
+    .process-line {
+      background: linear-gradient(90deg, var(--pink), var(--purple), var(--cyan));
+    }
+
+    /* Button styles */
+    .btn-primary {
+      background: var(--pink);
+      color: white;
+      padding: 1rem 2rem;
+      font-weight: 600;
+      border-radius: 0;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn-primary:hover::before { left: 100%; }
+    .btn-primary:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255,0,110,0.5);
+    }
+
+    .btn-outline {
+      border: 2px solid var(--cyan);
+      color: var(--cyan);
+      padding: 1rem 2rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .btn-outline:hover {
+      background: var(--cyan);
+      color: var(--dark);
+    }
+
+    /* Section alternating backgrounds */
+    .bg-light { background: var(--light); color: var(--dark); }
+    .bg-dark { background: var(--dark); color: #fff; }
+
+    /* Image treatments */
+    .img-duotone {
+      filter: grayscale(30%) contrast(1.1);
+      transition: filter 0.4s ease;
+    }
+    .img-duotone:hover { filter: grayscale(0%) contrast(1.05); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .marquee-track { animation: none; }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <!-- Video Background -->
+  <video class="video-bg" autoplay muted loop playsinline poster="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1920&q=80">
+    <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-futuristic-devices-99786-large.mp4" type="video/mp4">
+  </video>
+
+  <!-- Canvas Particles -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 w-full z-50 px-6 py-4 transition-all duration-300" id="navbar">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2 group">
+        <div class="w-10 h-10 bg-gradient-to-br from-[#FF006E] to-[#8338EC] flex items-center justify-center transform group-hover:rotate-12 transition-transform">
+          <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+        </div>
+        <span class="font-display text-2xl font-bold tracking-tight">LUMINA</span>
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#product" class="text-sm font-medium hover:text-[#FF006E] transition-colors">产品</a>
+        <a href="#solutions" class="text-sm font-medium hover:text-[#00F5D4] transition-colors">方案</a>
+        <a href="#cases" class="text-sm font-medium hover:text-[#FFBE0B] transition-colors">案例</a>
+        <a href="#about" class="text-sm font-medium hover:text-[#8338EC] transition-colors">关于</a>
+        <a href="#contact" class="btn-primary text-sm">预约演示</a>
+      </div>
+      <button class="md:hidden" id="mobile-menu-btn">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="fixed inset-0 bg-[#0A0A12]/95 backdrop-blur-xl z-40 hidden flex-col items-center justify-center gap-8">
+    <a href="#product" class="text-2xl font-display font-bold hover:text-[#FF006E]">产品</a>
+    <a href="#solutions" class="text-2xl font-display font-bold hover:text-[#00F5D4]">方案</a>
+    <a href="#cases" class="text-2xl font-display font-bold hover:text-[#FFBE0B]">案例</a>
+    <a href="#about" class="text-2xl font-display font-bold hover:text-[#8338EC]">关于</a>
+    <a href="#contact" class="btn-primary text-lg mt-4">预约演示</a>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="relative min-h-screen flex items-center overflow-hidden" data-cms-section="hero">
+    <div class="absolute inset-0 aurora opacity-60"></div>
+    <div class="relative z-10 max-w-[1600px] mx-auto px-6 py-32 grid lg:grid-cols-12 gap-12 items-center w-full">
+      <div class="lg:col-span-7 space-y-8">
+        <div class="inline-flex items-center gap-2 px-4 py-2 border border-[#00F5D4]/30 bg-[#00F5D4]/10 backdrop-blur-sm reveal">
+          <span class="w-2 h-2 bg-[#00F5D4] rounded-full animate-pulse"></span>
+          <span class="text-xs font-semibold tracking-widest uppercase text-[#00F5D4]">AI-Powered Collaboration</span>
+        </div>
+        <h1 class="font-display text-5xl md:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight reveal">
+          让团队创意<br>
+          <span class="font-serif-display italic text-gradient">如多巴胺</span><br>
+          般流动
+        </h1>
+        <p class="text-lg md:text-xl text-white/70 max-w-xl leading-relaxed reveal">
+          LUMINA 是新一代智能协作平台。我们将 AI 助手、实时白板、项目追踪融为一体，让每个灵感都能被看见、被连接、被实现。
+        </p>
+        <div class="flex flex-wrap gap-4 reveal">
+          <a href="#contact" class="btn-primary flex items-center gap-2">
+            免费试用 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+          <a href="#product" class="btn-outline flex items-center gap-2">
+            <i data-lucide="play-circle" class="w-5 h-5"></i> 观看演示
+          </a>
+        </div>
+        <div class="flex items-center gap-6 pt-4 reveal">
+          <div class="flex -space-x-3">
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" class="w-10 h-10 rounded-full border-2 border-[#0A0A12]" alt="User">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="w-10 h-10 rounded-full border-2 border-[#0A0A12]" alt="User">
+            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" class="w-10 h-10 rounded-full border-2 border-[#0A0A12]" alt="User">
+            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop" class="w-10 h-10 rounded-full border-2 border-[#0A0A12]" alt="User">
+          </div>
+          <p class="text-sm text-white/60">已有 <span class="text-white font-bold">12,000+</span> 团队加入</p>
+        </div>
+      </div>
+      <div class="lg:col-span-5 relative reveal">
+        <div class="relative">
+          <div class="absolute -inset-4 bg-gradient-to-r from-[#FF006E]/30 to-[#8338EC]/30 blur-3xl"></div>
+          <img src="https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800&q=80" alt="LUMINA Dashboard" class="relative w-full rounded-none shadow-2xl img-duotone">
+          <div class="absolute -bottom-6 -left-6 bg-[#FFBE0B] text-[#0A0A12] p-4 font-display font-bold text-sm transform -rotate-3 shadow-xl">
+            效率提升 340%
+          </div>
+          <div class="absolute -top-4 -right-4 bg-[#00F5D4] text-[#0A0A12] p-3 shadow-xl">
+            <i data-lucide="sparkles" class="w-6 h-6"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+      <i data-lucide="chevron-down" class="w-8 h-8 text-white/40"></i>
+    </div>
+  </section>
+
+  <!-- Logo Marquee -->
+  <section class="py-12 border-y border-white/10 bg-[#0A0A12]/80 backdrop-blur-sm overflow-hidden" data-cms-section="logos">
+    <div class="marquee-track whitespace-nowrap">
+      <div class="flex items-center gap-16 opacity-50 grayscale hover:grayscale-0 transition-all">
+        <span class="font-display text-2xl font-bold">Stripe</span>
+        <span class="font-display text-2xl font-bold">Notion</span>
+        <span class="font-display text-2xl font-bold">Figma</span>
+        <span class="font-display text-2xl font-bold">Linear</span>
+        <span class="font-display text-2xl font-bold">Vercel</span>
+        <span class="font-display text-2xl font-bold">Slack</span>
+        <span class="font-display text-2xl font-bold">Discord</span>
+        <span class="font-display text-2xl font-bold">GitHub</span>
+      </div>
+      <div class="flex items-center gap-16 opacity-50 grayscale hover:grayscale-0 transition-all">
+        <span class="font-display text-2xl font-bold">Stripe</span>
+        <span class="font-display text-2xl font-bold">Notion</span>
+        <span class="font-display text-2xl font-bold">Figma</span>
+        <span class="font-display text-2xl font-bold">Linear</span>
+        <span class="font-display text-2xl font-bold">Vercel</span>
+        <span class="font-display text-2xl font-bold">Slack</span>
+        <span class="font-display text-2xl font-bold">Discord</span>
+        <span class="font-display text-2xl font-bold">GitHub</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Features -->
+  <section id="product" class="py-32 bg-light relative overflow-hidden" data-cms-section="features">
+    <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#FF006E]/5 to-transparent"></div>
+    <div class="max-w-[1600px] mx-auto px-6 relative z-10">
+      <div class="grid lg:grid-cols-2 gap-16 items-start mb-24">
+        <div class="reveal">
+          <span class="text-[#FF006E] font-semibold tracking-widest uppercase text-sm">产品能力</span>
+          <h2 class="font-display text-4xl md:text-6xl font-bold mt-4 leading-tight text-[#0A0A12]">
+            不只是工具<br>是团队的
+            <span class="font-serif-display italic text-[#8338EC]">第二大脑</span>
+          </h2>
+        </div>
+        <div class="lg:pt-12 reveal">
+          <p class="text-lg text-[#0A0A12]/70 leading-relaxed">
+            从头脑风暴到产品上线，LUMINA 覆盖创意工作的每一个节点。AI 自动整理会议纪要、生成任务、追踪进度，让你专注于真正重要的事。
+          </p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Feature 1 -->
+        <div class="bg-white p-8 border border-[#0A0A12]/10 hover-lift reveal group">
+          <div class="w-14 h-14 bg-[#FF006E]/10 flex items-center justify-center mb-6 group-hover:bg-[#FF006E] transition-colors">
+            <i data-lucide="brain-circuit" class="w-7 h-7 text-[#FF006E] group-hover:text-white transition-colors"></i>
+          </div>
+          <h3 class="font-display text-2xl font-bold text-[#0A0A12] mb-3">AI 智能助手</h3>
+          <p class="text-[#0A0A12]/60 leading-relaxed">自动生成会议纪要、提炼待办、推荐下一步行动，24小时待命。</p>
+        </div>
+        <!-- Feature 2 -->
+        <div class="bg-[#0A0A12] p-8 hover-lift reveal group">
+          <div class="w-14 h-14 bg-[#00F5D4]/10 flex items-center justify-center mb-6 group-hover:bg-[#00F5D4] transition-colors">
+            <i data-lucide="layout-dashboard" class="w-7 h-7 text-[#00F5D4] group-hover:text-[#0A0A12] transition-colors"></i>
+          </div>
+          <h3 class="font-display text-2xl font-bold text-white mb-3">无限画布</h3>
+          <p class="text-white/60 leading-relaxed">实时协作白板，支持流程图、线框图、便签，灵感随意拼贴。</p>
+        </div>
+        <!-- Feature 3 -->
+        <div class="bg-[#FFBE0B] p-8 hover-lift reveal group">
+          <div class="w-14 h-14 bg-[#0A0A12]/10 flex items-center justify-center mb-6 group-hover:bg-[#0A0A12] transition-colors">
+            <i data-lucide="git-branch" class="w-7 h-7 text-[#0A0A12] group-hover:text-[#FFBE0B] transition-colors"></i>
+          </div>
+          <h3 class="font-display text-2xl font-bold text-[#0A0A12] mb-3">项目追踪</h3>
+          <p class="text-[#0A0A12]/70 leading-relaxed">可视化看板、甘特图、里程碑，进度一目了然。</p>
+        </div>
+        <!-- Feature 4 -->
+        <div class="bg-[#8338EC] p-8 hover-lift reveal group md:col-span-2">
+          <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <div class="w-14 h-14 bg-white/10 flex items-center justify-center mb-6">
+                <i data-lucide="workflow" class="w-7 h-7 text-white"></i>
+              </div>
+              <h3 class="font-display text-2xl font-bold text-white mb-3">自动化工作流</h3>
+              <p class="text-white/70 leading-relaxed">拖拽式流程编排，连接 200+ 主流应用，让重复工作自己跑起来。</p>
+            </div>
+            <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80" alt="Workflow" class="w-full h-48 object-cover img-duotone">
+          </div>
+        </div>
+        <!-- Feature 5 -->
+        <div class="bg-white p-8 border border-[#0A0A12]/10 hover-lift reveal">
+          <div class="w-14 h-14 bg-[#3A86FF]/10 flex items-center justify-center mb-6">
+            <i data-lucide="shield-check" class="w-7 h-7 text-[#3A86FF]"></i>
+          </div>
+          <h3 class="font-display text-2xl font-bold text-[#0A0A12] mb-3">企业级安全</h3>
+          <p class="text-[#0A0A12]/60 leading-relaxed">SOC2 认证、端到端加密、SSO 单点登录，数据安全无忧。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works / Process -->
+  <section id="solutions" class="py-32 bg-dark relative overflow-hidden noise" data-cms-section="workflow">
+    <div class="max-w-[1600px] mx-auto px-6 relative z-10">
+      <div class="text-center max-w-3xl mx-auto mb-20 reveal">
+        <span class="text-[#00F5D4] font-semibold tracking-widest uppercase text-sm">工作流</span>
+        <h2 class="font-display text-4xl md:text-6xl font-bold mt-4">从想法到交付<br>只需四步</h2>
+      </div>
+
+      <div class="relative">
+        <div class="hidden lg:block absolute top-1/2 left-0 w-full h-1 process-line -translate-y-1/2"></div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div class="relative bg-[#0A0A12] border border-white/10 p-8 reveal hover-lift">
+            <div class="w-16 h-16 bg-[#FF006E] flex items-center justify-center text-2xl font-display font-bold mb-6 relative z-10">01</div>
+            <h3 class="font-display text-xl font-bold mb-3">捕捉灵感</h3>
+            <p class="text-white/60">语音、文字、图片一键记录，AI 自动分类整理。</p>
+          </div>
+          <div class="relative bg-[#0A0A12] border border-white/10 p-8 reveal hover-lift lg:mt-12">
+            <div class="w-16 h-16 bg-[#FFBE0B] text-[#0A0A12] flex items-center justify-center text-2xl font-display font-bold mb-6 relative z-10">02</div>
+            <h3 class="font-display text-xl font-bold mb-3">协作共创</h3>
+            <p class="text-white/60">多人实时编辑，评论、标注、@成员，沟通零延迟。</p>
+          </div>
+          <div class="relative bg-[#0A0A12] border border-white/10 p-8 reveal hover-lift">
+            <div class="w-16 h-16 bg-[#00F5D4] text-[#0A0A12] flex items-center justify-center text-2xl font-display font-bold mb-6 relative z-10">03</div>
+            <h3 class="font-display text-xl font-bold mb-3">智能执行</h3>
+            <p class="text-white/60">AI 拆解任务、分配责任人、设置截止时间。</p>
+          </div>
+          <div class="relative bg-[#0A0A12] border border-white/10 p-8 reveal hover-lift lg:mt-12">
+            <div class="w-16 h-16 bg-[#8338EC] flex items-center justify-center text-2xl font-display font-bold mb-6 relative z-10">04</div>
+            <h3 class="font-display text-xl font-bold mb-3">交付复盘</h3>
+            <p class="text-white/60">自动生成项目报告，沉淀知识库，持续优化。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Asymmetric Visual Section -->
+  <section class="py-32 bg-light relative overflow-hidden" data-cms-section="highlights"><div class="max-w-[1600px] mx-auto px-6"><div class="grid lg:grid-cols-12 gap-6 items-stretch">
+        <!-- Large left image -->
+        <div class="lg:col-span-7 relative min-h-[500px] reveal">
+          <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80" alt="Team collaboration" class="w-full h-full object-cover img-duotone">
+          <div class="absolute bottom-0 left-0 bg-[#0A0A12] text-white p-8 max-w-md">
+            <p class="font-serif-display italic text-2xl text-[#FFBE0B]">"创意不是一个人的灵光乍现，而是一群人的化学反应。"</p>
+          </div>
+        </div>
+        <!-- Right stacked blocks -->
+        <div class="lg:col-span-5 grid grid-rows-2 gap-6">
+          <div class="bg-[#FF006E] p-10 flex flex-col justify-between reveal">
+            <i data-lucide="message-circle" class="w-12 h-12 text-white"></i>
+            <div>
+              <h3 class="font-display text-3xl font-bold text-white mb-3">实时沟通</h3>
+              <p class="text-white/80">内置聊天、音视频、屏幕共享，上下文永不丢失。</p>
+            </div>
+          </div>
+          <div class="bg-[#0A0A12] p-10 flex flex-col justify-between reveal">
+            <i data-lucide="bar-chart-3" class="w-12 h-12 text-[#00F5D4]"></i>
+            <div>
+              <h3 class="font-display text-3xl font-bold text-white mb-3">数据洞察</h3>
+              <p class="text-white/60">团队效率、项目健康度、时间分布，一眼看清。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cases / Gallery -->
+  <section id="cases" class="py-32 bg-dark relative overflow-hidden" data-cms-section="cases">
+    <div class="absolute inset-0 aurora opacity-40"></div>
+    <div class="max-w-[1600px] mx-auto px-6 relative z-10">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 reveal">
+        <div>
+          <span class="text-[#FFBE0B] font-semibold tracking-widest uppercase text-sm">客户案例</span>
+          <h2 class="font-display text-4xl md:text-6xl font-bold mt-4">他们都在用<br><span class="text-gradient-cool">LUMINA</span></h2>
+        </div>
+        <a href="#" class="btn-outline self-start md:self-auto">查看全部案例</a>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="group relative overflow-hidden reveal hover-lift">
+          <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&q=80" alt="Case 1" class="w-full h-80 object-cover img-duotone group-hover:scale-105 transition-transform duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A12] via-transparent to-transparent"></div>
+          <div class="absolute bottom-0 left-0 p-6">
+            <span class="text-[#00F5D4] text-xs font-semibold uppercase tracking-wider">科技公司</span>
+            <h3 class="font-display text-2xl font-bold mt-2">NovaTech</h3>
+            <p class="text-white/60 text-sm mt-1">产品研发周期缩短 45%</p>
+          </div>
+        </div>
+        <div class="group relative overflow-hidden reveal hover-lift lg:mt-12">
+          <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80" alt="Case 2" class="w-full h-80 object-cover img-duotone group-hover:scale-105 transition-transform duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A12] via-transparent to-transparent"></div>
+          <div class="absolute bottom-0 left-0 p-6">
+            <span class="text-[#FF006E] text-xs font-semibold uppercase tracking-wider">设计 agency</span>
+            <h3 class="font-display text-2xl font-bold mt-2">Pixel Studio</h3>
+            <p class="text-white/60 text-sm mt-1">客户提案效率提升 3 倍</p>
+          </div>
+        </div>
+        <div class="group relative overflow-hidden reveal hover-lift">
+          <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80" alt="Case 3" class="w-full h-80 object-cover img-duotone group-hover:scale-105 transition-transform duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A12] via-transparent to-transparent"></div>
+          <div class="absolute bottom-0 left-0 p-6">
+            <span class="text-[#FFBE0B] text-xs font-semibold uppercase tracking-wider">电商品牌</span>
+            <h3 class="font-display text-2xl font-bold mt-2">LuxeMart</h3>
+            <p class="text-white/60 text-sm mt-1">营销活动协同成本降低 60%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="py-24 bg-[#FFBE0B] relative overflow-hidden" data-cms-section="stats">
+    <div class="max-w-[1600px] mx-auto px-6">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="text-center reveal">
+          <div class="font-display text-5xl md:text-7xl font-bold text-[#0A0A12]">12K+</div>
+          <p class="text-[#0A0A12]/70 font-medium mt-2">活跃团队</p>
+        </div>
+        <div class="text-center reveal">
+          <div class="font-display text-5xl md:text-7xl font-bold text-[#0A0A12]">8.5M</div>
+          <p class="text-[#0A0A12]/70 font-medium mt-2">任务完成</p>
+        </div>
+        <div class="text-center reveal">
+          <div class="font-display text-5xl md:text-7xl font-bold text-[#0A0A12]">99.9%</div>
+          <p class="text-[#0A0A12]/70 font-medium mt-2">服务可用性</p>
+        </div>
+        <div class="text-center reveal">
+          <div class="font-display text-5xl md:text-7xl font-bold text-[#0A0A12]">150+</div>
+          <p class="text-[#0A0A12]/70 font-medium mt-2">国家地区</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="about" class="py-32 bg-light relative overflow-hidden" data-cms-section="testimonials">
+    <div class="max-w-[1600px] mx-auto px-6">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <div class="reveal">
+          <span class="text-[#8338EC] font-semibold tracking-widest uppercase text-sm">用户评价</span>
+          <h2 class="font-display text-4xl md:text-5xl font-bold mt-4 text-[#0A0A12] leading-tight">
+            被全球顶尖团队<br>信赖的协作伙伴
+          </h2>
+          <div class="mt-10 space-y-8">
+            <div class="border-l-4 border-[#FF006E] pl-6">
+              <p class="text-[#0A0A12]/70 text-lg italic leading-relaxed">"LUMINA 彻底改变了我们的工作方式。AI 助手帮我们把会议时间砍了一半，团队专注度显著提升。"</p>
+              <div class="flex items-center gap-4 mt-4">
+                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full object-cover" alt="User">
+                <div>
+                  <p class="font-display font-bold text-[#0A0A12]">Sarah Chen</p>
+                  <p class="text-sm text-[#0A0A12]/50">NovaTech 产品总监</p>
+                </div>
+              </div>
+            </div>
+            <div class="border-l-4 border-[#00F5D4] pl-6">
+              <p class="text-[#0A0A12]/70 text-lg italic leading-relaxed">"无限画布让我们的创意讨论变得可视化，远程团队终于有了面对面的感觉。"</p>
+              <div class="flex items-center gap-4 mt-4">
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full object-cover" alt="User">
+                <div>
+                  <p class="font-display font-bold text-[#0A0A12]">Marcus Webb</p>
+                  <p class="text-sm text-[#0A0A12]/50">Pixel Studio 创始人</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="relative reveal">
+          <div class="absolute -inset-4 bg-gradient-to-br from-[#8338EC]/20 to-[#00F5D4]/20 blur-3xl"></div>
+          <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80" alt="Team meeting" class="relative w-full h-[600px] object-cover img-duotone">
+          <div class="absolute -bottom-8 -right-8 bg-[#0A0A12] text-white p-6 shadow-2xl">
+            <div class="flex items-center gap-2 mb-2">
+              <i data-lucide="star" class="w-5 h-5 text-[#FFBE0B] fill-[#FFBE0B]"></i>
+              <i data-lucide="star" class="w-5 h-5 text-[#FFBE0B] fill-[#FFBE0B]"></i>
+              <i data-lucide="star" class="w-5 h-5 text-[#FFBE0B] fill-[#FFBE0B]"></i>
+              <i data-lucide="star" class="w-5 h-5 text-[#FFBE0B] fill-[#FFBE0B]"></i>
+              <i data-lucide="star" class="w-5 h-5 text-[#FFBE0B] fill-[#FFBE0B]"></i>
+            </div>
+            <p class="font-display text-2xl font-bold">4.9/5</p>
+            <p class="text-white/60 text-sm">来自 2,400+ 条评价</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA / Contact -->
+  <section id="contact" class="py-32 bg-dark relative overflow-hidden" data-cms-section="contact">
+    <div class="absolute inset-0 aurora opacity-60"></div>
+    <div class="max-w-[1600px] mx-auto px-6 relative z-10">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <div class="reveal">
+          <h2 class="font-display text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
+            准备好让团队<br>
+            <span class="text-gradient">创意爆发</span>了吗？
+          </h2>
+          <p class="text-lg text-white/60 mt-6 max-w-lg">
+            立即预约专属演示，我们的顾问会在 24 小时内联系你，为你定制最适合团队的协作方案。
+          </p>
+          <div class="flex flex-wrap gap-4 mt-8">
+            <a href="#" class="btn-primary flex items-center gap-2">
+              立即开始 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+            <a href="#" class="btn-outline flex items-center gap-2">
+              <i data-lucide="calendar" class="w-5 h-5"></i> 预约演示
+            </a>
+          </div>
+        </div>
+        <div class="bg-white/5 backdrop-blur-md border border-white/10 p-8 md:p-10 reveal">
+          <h3 class="font-display text-2xl font-bold mb-6">联系我们</h3>
+          <form class="space-y-4" onsubmit="event.preventDefault(); alert('感谢您的留言，我们会尽快联系您！');">
+            <div class="grid md:grid-cols-2 gap-4">
+              <input type="text" placeholder="姓名" class="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-[#FF006E] transition-colors">
+              <input type="email" placeholder="邮箱" class="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-[#FF006E] transition-colors">
+            </div>
+            <input type="text" placeholder="公司名称" class="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-[#FF006E] transition-colors">
+            <textarea rows="4" placeholder="告诉我们您的需求..." class="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-[#FF006E] transition-colors"></textarea>
+            <button type="submit" class="btn-primary w-full flex items-center justify-center gap-2">
+              发送消息 <i data-lucide="send" class="w-4 h-4"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-[#050508] border-t border-white/10 py-16">
+    <div class="max-w-[1600px] mx-auto px-6">
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+        <div>
+          <div class="flex items-center gap-2 mb-6">
+            <div class="w-8 h-8 bg-gradient-to-br from-[#FF006E] to-[#8338EC] flex items-center justify-center">
+              <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+            </div>
+            <span class="font-display text-xl font-bold">LUMINA</span>
+          </div>
+          <p class="text-white/50 text-sm leading-relaxed">
+            新一代 AI 协作平台，让团队创意高效流动。
+          </p>
+        </div>
+        <div>
+          <h4 class="font-display font-bold mb-4">产品</h4>
+          <ul class="space-y-2 text-white/50 text-sm">
+            <li><a href="#" class="hover:text-[#FF006E] transition-colors">功能特性</a></li>
+            <li><a href="#" class="hover:text-[#FF006E] transition-colors">定价方案</a></li>
+            <li><a href="#" class="hover:text-[#FF006E] transition-colors">企业版</a></li>
+            <li><a href="#" class="hover:text-[#FF006E] transition-colors">更新日志</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-display font-bold mb-4">资源</h4>
+          <ul class="space-y-2 text-white/50 text-sm">
+            <li><a href="#" class="hover:text-[#00F5D4] transition-colors">帮助中心</a></li>
+            <li><a href="#" class="hover:text-[#00F5D4] transition-colors">开发者 API</a></li>
+            <li><a href="#" class="hover:text-[#00F5D4] transition-colors">社区</a></li>
+            <li><a href="#" class="hover:text-[#00F5D4] transition-colors">博客</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-display font-bold mb-4">公司</h4>
+          <ul class="space-y-2 text-white/50 text-sm">
+            <li><a href="#" class="hover:text-[#FFBE0B] transition-colors">关于我们</a></li>
+            <li><a href="#" class="hover:text-[#FFBE0B] transition-colors">加入我们</a></li>
+            <li><a href="#" class="hover:text-[#FFBE0B] transition-colors">联系方式</a></li>
+            <li><a href="#" class="hover:text-[#FFBE0B] transition-colors">隐私政策</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-white/40 text-sm">© 2026 LUMINA Inc. All rights reserved.</p>
+        <div class="flex gap-4">
+          <a href="#" class="w-10 h-10 border border-white/10 flex items-center justify-center hover:bg-[#FF006E] hover:border-[#FF006E] transition-colors"><i data-lucide="twitter" class="w-4 h-4"></i></a>
+          <a href="#" class="w-10 h-10 border border-white/10 flex items-center justify-center hover:bg-[#8338EC] hover:border-[#8338EC] transition-colors"><i data-lucide="linkedin" class="w-4 h-4"></i></a>
+          <a href="#" class="w-10 h-10 border border-white/10 flex items-center justify-center hover:bg-[#00F5D4] hover:border-[#00F5D4] transition-colors"><i data-lucide="github" class="w-4 h-4"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        navbar.classList.add('bg-[#0A0A12]/90', 'backdrop-blur-md', 'border-b', 'border-white/10');
+      } else {
+        navbar.classList.remove('bg-[#0A0A12]/90', 'backdrop-blur-md', 'border-b', 'border-white/10');
+      }
+    });
+
+    // Mobile menu
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+      mobileMenu.classList.toggle('flex');
+    });
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        mobileMenu.classList.remove('flex');
+      });
+    });
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+
+    reveals.forEach(el => {
+      revealObserver.observe(el);
+      // Immediate activation if already in viewport
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        el.classList.add('active');
+      }
+    });
+
+    // Fallback: ensure all reveals become visible shortly after load
+    setTimeout(() => {
+      reveals.forEach(el => {
+        if (!el.classList.contains('active')) {
+          el.classList.add('active');
+        }
+      });
+    }, 1500);
+
+    // Canvas particle network
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let animationId;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const colors = ['#FF006E', '#FB5607', '#FFBE0B', '#8338EC', '#3A86FF', '#00F5D4'];
+    const particleCount = window.innerWidth < 768 ? 25 : 45;
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.radius = Math.random() * 2 + 1;
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    }
+    initParticles();
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 * (1 - distance / 120)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+      animationId = requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // Pause animation when tab hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationId);
+      } else {
+        animateParticles();
+      }
+    });
+
+    // Mouse interaction with particles
+    let mouse = { x: null, y: null };
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    });
+    window.addEventListener('mouseleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    // Add subtle mouse repulsion
+    function animateWithMouse() {
+      if (mouse.x && mouse.y) {
+        particles.forEach(p => {
+          const dx = mouse.x - p.x;
+          const dy = mouse.y - p.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 100) {
+            const force = (100 - distance) / 100;
+            p.vx -= (dx / distance) * force * 0.02;
+            p.vy -= (dy / distance) * force * 0.02;
+          }
+        });
+      }
+    }
+    setInterval(animateWithMouse, 50);
+  </script>
+  <script src="js/cms.js"></script>
+</body>
+</html>
