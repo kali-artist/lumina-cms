@@ -6,16 +6,6 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/api/debug-env') {
-      return new Response(JSON.stringify({
-        keys: Object.keys(env).filter(k => k !== 'ASSETS'),
-        apiUrl: env.API_URL || null,
-        hasAssets: !!env.ASSETS
-      }, null, 2), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
     if (url.pathname.startsWith('/api/')) {
       const apiUrl = env.API_URL;
       if (!apiUrl) {
